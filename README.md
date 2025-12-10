@@ -173,9 +173,19 @@ data_splits/
         real/
 ```
 
-### Cross-Dataset (Optional)
+### Cross-Dataset
 
-For Midjourney/DALL-E testing:
+For Midjourney dataset:
+
+URL: https://www.kaggle.com/datasets/mariammarioma/midjourney-cifake-inspired
+
+Description:
+
+A CIFAKE-inspired dataset generated using Midjourney v5/v6
+
+Includes high-quality AI-generated images and real photographs
+
+Designed to mimic the CIFAKE structure but with more complex image semantics
 
 ```
 cross_test_data/

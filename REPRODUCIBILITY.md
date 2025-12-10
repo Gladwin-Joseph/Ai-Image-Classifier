@@ -180,13 +180,29 @@ python test.py --mode cifake --test_dir ./data_splits/test
 
 ## 6. Cross-Dataset Evaluation
 
+Dataset Used
+
+Name: MidJourney CIFAKE-Inspired Dataset
+
+Source: Kaggle
+
+URL: https://www.kaggle.com/datasets/mariammarioma/midjourney-cifake-inspired
+
+Description:
+
+A CIFAKE-inspired dataset generated using Midjourney v5/v6
+
+Includes high-quality AI-generated images and real photographs
+
+Designed to mimic the CIFAKE structure but with more complex image semantics
+
 ### Dataset Preparation
 
-Organize Midjourney/external images as:
+Organize Midjourney dataset images as:
 
 ```
 cross_test_data/
-    FAKE/       # AI-generated images (Midjourney, DALL-E, etc.)
+    FAKE/       # AI-generated images
     REAL/       # Real photographs
 ```
 
