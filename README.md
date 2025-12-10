@@ -302,15 +302,15 @@ python train.py --epochs 10 --batch_size 64 --limit_samples 10000
 
 ### Training Configuration
 
-| Parameter       | Value                  |
-| --------------- | ---------------------- |
-| Optimizer       | Adam                   |
-| Learning Rate   | 0.001                  |
-| Weight Decay    | 1e-4                   |
-| Batch Size      | 64                     |
-| Label Smoothing | 0.1                    |
-| Early Stopping  | 10 epochs              |
-| Training Time   | ~25 minutes (RTX 3050) |
+| Parameter       | Value                             |
+| --------------- | --------------------------------- |
+| Optimizer       | Adam                              |
+| Learning Rate   | 0.001                             |
+| Weight Decay    | 1e-4                              |
+| Batch Size      | 64                                |
+| Label Smoothing | 0.1                               |
+| Early Stopping  | 10 epochs                         |
+| Training Time   | ~15 minutes(per epoch) (RTX 3050) |
 
 ### Phase 2 Results (CIFAKE)
 
