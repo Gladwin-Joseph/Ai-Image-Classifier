@@ -205,15 +205,16 @@ project/
         best_custom_cnn_fast.pth
     results/                        # Test results (JSON)
     logs_phase2/                    # Training logs
-
-    train_phase1.py                # Phase 1 training
-    test_phase1.py                 # Phase 1 testing
+    phase_1/
+        results/
+            json results
+        train_phase1.py                # Phase 1 training
+        test_phase1.py                 # Phase 1 testing
     train.py                        # Phase 2 training
     test.py                         # Phase 2 testing
     split_data.py                   # Data splitting utility
     README.md                       # This file
     REPRODUCIBILITY.md              # Detailed reproduction instructions
-    PRESENTATION_SCRIPT.md          # Code walkthrough script
 ```
 
 ---
@@ -498,6 +499,5 @@ python test.py --mode single --image ./image.jpg
 | phase_1/check_data.py      | Check if dataset is proper                  |
 | phase_1/reorganize_data.py | Reorganize into two subfolders(ai and real) |
 | REPRODUCIBILITY.md         | Detailed reproduction instructions          |
-| PRESENTATION_SCRIPT.md     | 4-minute code walkthrough script            |
 
 ---
