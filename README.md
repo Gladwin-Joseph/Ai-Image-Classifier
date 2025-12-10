@@ -2,18 +2,21 @@
 
 A deep learning project for detecting AI-generated images using Convolutional Neural Networks. This project implements a two-phase approach, progressing from classical machine learning baselines to custom CNN architectures, with comprehensive cross-dataset evaluation on Midjourney images.
 
+---
+
 ## Table of Contents
 
 1. [Project Overview](#project-overview)
-2. [Dataset](#dataset)
-3. [Project Structure](#project-structure)
-4. [Installation](#installation)
+2. [Quick Start](#quick-start)
+3. [Installation](#installation)
+4. [Dataset Setup](#dataset-setup)
 5. [Phase 1: Feature Engineering Baseline](#phase-1-feature-engineering-baseline)
 6. [Phase 2: Custom CNN](#phase-2-custom-cnn)
 7. [Testing](#testing)
 8. [Cross-Dataset Evaluation](#cross-dataset-evaluation)
 9. [Results Summary](#results-summary)
-10. [Limitations and Future Work](#limitations-and-future-work)
+10. [Troubleshooting](#troubleshooting)
+11. [Limitations and Future Work](#limitations-and-future-work)
 
 ---
 
@@ -21,46 +24,166 @@ A deep learning project for detecting AI-generated images using Convolutional Ne
 
 The proliferation of AI-generated images from models like Stable Diffusion, Midjourney, and DALL-E presents challenges for content authenticity verification. This project develops and evaluates methods to distinguish between real photographs and AI-generated images.
 
-The research follows a systematic progression through two phases, with each phase building upon the insights from the previous one. The final evaluation includes cross-dataset testing on Midjourney images to assess real-world generalization capabilities.
+The research follows a systematic progression through two phases:
+
+- Phase 1: Classical ML baseline using hand-crafted features (68.50% accuracy)
+- Phase 2: Custom CNN achieving 96.18% on CIFAKE, 71.90% on cross-dataset
 
 ---
 
-## Dataset
+## Quick Start
+
+```bash
+# Clone and setup
+git clone <repository-url>
+cd ai-image-detection
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate        # Linux/Mac
+venv\Scripts\activate           # Windows
+
+# Install dependencies
+pip install torch torchvision numpy scikit-learn pillow tqdm
+
+# Download CIFAKE dataset from Kaggle and extract to ./data
+
+# Split data
+python split_data.py --input ./data --output ./data_splits
+
+# Train CNN
+python train.py --epochs 40 --batch_size 64
+
+# Test
+python test.py --mode cifake --test_dir ./data_splits/test
+```
+
+---
+
+## Installation
+
+### System Requirements
+
+| Component | Minimum | Recommended |
+| --------- | ------- | ----------- |
+| Python    | 3.8     | 3.10+       |
+| GPU VRAM  | 4GB     | 8GB+        |
+| RAM       | 8GB     | 16GB        |
+| Storage   | 5GB     | 10GB        |
+
+### Step 1: Create Virtual Environment
+
+```bash
+# Create new virtual environment
+python -m venv venv
+
+# Activate virtual environment
+# On Linux/Mac:
+source venv/bin/activate
+
+# On Windows (Command Prompt):
+venv\Scripts\activate
+
+# On Windows (PowerShell):
+venv\Scripts\Activate.ps1
+```
+
+### Step 2: Install Dependencies
+
+```bash
+# Install PyTorch (with CUDA support)
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+
+# Install other dependencies
+pip install numpy scikit-learn pillow tqdm
+
+# Verify installation
+python -c "import torch; print(f'PyTorch: {torch.__version__}'); print(f'CUDA: {torch.cuda.is_available()}')"
+```
+
+### Step 3: Verify GPU Access
+
+```bash
+python -c "
+import torch
+if torch.cuda.is_available():
+    print(f'GPU: {torch.cuda.get_device_name(0)}')
+    print(f'Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.2f} GB')
+else:
+    print('No GPU detected, using CPU')
+"
+```
+
+### Requirements.txt
+
+Create a `requirements.txt` file:
+
+```
+torch>=1.9.0
+torchvision>=0.10.0
+numpy>=1.21.0
+scikit-learn>=0.24.0
+Pillow>=8.0.0
+tqdm>=4.62.0
+```
+
+Install with: `pip install -r requirements.txt`
+
+---
+
+## Dataset Setup
 
 ### CIFAKE Dataset
 
-The primary training dataset is CIFAKE, containing 120,000 images equally split between two classes:
+1. Download from Kaggle: https://www.kaggle.com/datasets/birdy654/cifake-real-and-ai-generated-synthetic-images
 
-| Class        | Count  | Source                |
-| ------------ | ------ | --------------------- |
-| Real         | 60,000 | CIFAR-10 dataset      |
-| AI-Generated | 60,000 | Stable Diffusion v1.4 |
-
-The images are 32x32 pixels in their original form. During training, they are resized to 128x128 pixels.
-
-### Cross-Dataset (Midjourney)
-
-For generalization testing, a separate dataset of Midjourney-generated images paired with real photographs is used. These images are high-resolution and processed using resolution-matching preprocessing to bridge the domain gap.
-
-### Data Organization
+2. Extract to the project directory:
 
 ```
-data/
-    ai_generated/
-        image_0001.jpg
-        image_0002.jpg
-        ...
-    real/
-        image_0001.jpg
-        image_0002.jpg
-        ...
+project/
+    data/
+        ai_generated/
+            0.jpg
+            1.jpg
+            ...
+        real/
+            0.jpg
+            1.jpg
+            ...
+```
 
+3. Split the data:
+
+```bash
+python split_data.py --input ./data --output ./data_splits
+```
+
+This creates:
+
+```
+data_splits/
+    train/          # 70% of data
+        ai_generated/
+        real/
+    val/            # 15% of data
+        ai_generated/
+        real/
+    test/           # 15% of data
+        ai_generated/
+        real/
+```
+
+### Cross-Dataset (Optional)
+
+For Midjourney/DALL-E testing:
+
+```
 cross_test_data/
-    FAKE/
-        midjourney_001.jpg
+    FAKE/           # AI-generated images
+        image1.jpg
         ...
-    REAL/
-        real_photo_001.jpg
+    REAL/           # Real photographs
+        image1.jpg
         ...
 ```
 
@@ -70,60 +193,61 @@ cross_test_data/
 
 ```
 project/
-    data/                           # CIFAKE dataset
-    data_splits/                    # Split dataset (train/val/test)
+    data/                           # CIFAKE dataset (download separately)
+    data_splits/                    # Split dataset (generated)
         train/
         val/
         test/
-    cross_test_data/                # Midjourney cross-dataset
-    models_phase2/                  # Saved model weights
+    cross_test_data/                # Cross-dataset for generalization testing
+    models_phase1/                 # Phase 1 model weights
+        logistic_regression.pkl
+    models_phase2/                  # Phase 2 model weights
         best_custom_cnn_fast.pth
     results/                        # Test results (JSON)
     logs_phase2/                    # Training logs
 
-    train.py                        # Phase 2 training script
-    test.py                         # Comprehensive testing script
+    train_phase1.py                # Phase 1 training
+    test_phase1.py                 # Phase 1 testing
+    train.py                        # Phase 2 training
+    test.py                         # Phase 2 testing
     split_data.py                   # Data splitting utility
-    README.md                       # Documentation
-```
-
----
-
-## Installation
-
-### Requirements
-
-- Python 3.8+
-- PyTorch 1.9+
-- CUDA-capable GPU (recommended)
-
-### Setup
-
-```bash
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate        # Linux/Mac
-venv\Scripts\activate           # Windows
-
-# Install dependencies
-pip install torch torchvision numpy scikit-learn tqdm pillow
+    README.md                       # This file
+    REPRODUCIBILITY.md              # Detailed reproduction instructions
+    PRESENTATION_SCRIPT.md          # Code walkthrough script
 ```
 
 ---
 
 ## Phase 1: Feature Engineering Baseline
 
-Phase 1 establishes a baseline using hand-crafted visual features and logistic regression classification.
+Phase 1 establishes a baseline using hand-crafted visual features and logistic regression.
 
-### Discriminative Features Identified
+### Discriminative Features
 
-Analysis revealed three key visual discriminators between real and AI-generated images:
+| Feature                 | Finding                        | Measurement          |
+| ----------------------- | ------------------------------ | -------------------- |
+| Edge Sharpness          | Real images 11.5x sharper      | Sobel edge detection |
+| Color Saturation        | Real images 31% more saturated | HSV color space      |
+| Brightness Distribution | Real images 50% more variance  | Luminance histogram  |
 
-| Feature                 | Finding                        | Measurement              |
-| ----------------------- | ------------------------------ | ------------------------ |
-| Edge Sharpness          | Real images 11.5x sharper      | Sobel edge detection     |
-| Color Saturation        | Real images 31% more saturated | HSV color space analysis |
-| Brightness Distribution | Real images 50% more variance  | Luminance histogram      |
+### Training
+
+```bash
+python phase_1/train.py --feature_method combined
+```
+
+### Testing
+
+```bash
+# Test on CIFAKE
+python phase_1/test.py --mode cifake --test_dir ./data_splits/test
+
+# Test single image
+python phase_1/test.py --mode single --image ./photo.jpg --test_dir ./data_splits/test
+
+# Cross-dataset with threshold optimization
+python phase_1/test.py --mode threshold --test_dir ./data_splits/test --cross_data_dir ./cross_test_data
+```
 
 ### Phase 1 Results
 
@@ -135,25 +259,6 @@ Analysis revealed three key visual discriminators between real and AI-generated 
 | F1-Score  | 0.6841 |
 | AUC-ROC   | 0.7234 |
 
-### Testing Logistic Regression Model
-
-To test the Phase 1 logistic regression model, use the feature extraction and prediction pipeline from Phase 1:
-
-```bash
-# If you have the Phase 1 scripts:
-python phase1_test.py --image ./path/to/image.jpg
-
-# Or run feature extraction manually and use sklearn predict
-python -c "
-import joblib
-from phase1_features import extract_features
-model = joblib.load('./models_phase1/logistic_regression.pkl')
-features = extract_features('./path/to/image.jpg')
-prediction = model.predict([features])
-print('Prediction:', 'AI' if prediction[0] == 0 else 'Real')
-"
-```
-
 ---
 
 ## Phase 2: Custom CNN
@@ -163,114 +268,95 @@ Phase 2 implements a custom CNN architecture optimized for the detection task.
 ### Architecture
 
 ```
-FastCNN Architecture:
-
+FastCNN (2-layer CNN)
 Input: 128x128x3
 
-Conv Block 1:
-    Conv2d(3 -> 16, 3x3) -> ReLU -> BatchNorm -> MaxPool(2x2)
-    Output: 64x64x16
+Conv Block 1: Conv2d(3->16) -> ReLU -> BatchNorm -> MaxPool
+Conv Block 2: Conv2d(16->32) -> ReLU -> BatchNorm -> MaxPool
+Global Average Pooling
+FC: 32 -> 128 -> 64 -> 2
 
-Conv Block 2:
-    Conv2d(16 -> 32, 3x3) -> ReLU -> BatchNorm -> MaxPool(2x2)
-    Output: 32x32x32
-
-Global Average Pooling -> 32
-
-Fully Connected:
-    Linear(32 -> 128) -> ReLU -> Dropout(0.3)
-    Linear(128 -> 64) -> ReLU -> Dropout(0.3)
-    Linear(64 -> 2)
-
-Output: 2 classes
 Parameters: ~150,000
 ```
 
 ### Training
 
 ```bash
-# Full training
+# Full training (recommended)
 python train.py --epochs 40 --batch_size 64 --lr 0.001
 
-# Quick training with limited samples
-python train.py --epochs 20 --limit_samples 10000
+# Quick training (for testing)
+python train.py --epochs 10 --batch_size 64 --limit_samples 10000
 ```
 
-Training configuration:
+### Training Configuration
 
-- Optimizer: Adam (lr=0.001, weight_decay=1e-4)
-- Loss: CrossEntropyLoss with label smoothing (0.1)
-- Scheduler: StepLR (step=10, gamma=0.5)
-- Early stopping: 10 epochs patience
-- Training time: ~25 minutes on RTX 3050
+| Parameter       | Value                  |
+| --------------- | ---------------------- |
+| Optimizer       | Adam                   |
+| Learning Rate   | 0.001                  |
+| Weight Decay    | 1e-4                   |
+| Batch Size      | 64                     |
+| Label Smoothing | 0.1                    |
+| Early Stopping  | 10 epochs              |
+| Training Time   | ~25 minutes (RTX 3050) |
+
+### Phase 2 Results (CIFAKE)
+
+| Metric    | Value  |
+| --------- | ------ |
+| Accuracy  | 96.18% |
+| Precision | 0.9618 |
+| Recall    | 0.9618 |
+| F1-Score  | 0.9618 |
+| AUC-ROC   | 0.9938 |
 
 ---
 
 ## Testing
 
-The test script provides four modes for comprehensive evaluation.
-
-### Prepare Data Splits
-
-```bash
-python split_data.py --input ./data --output ./data_splits
-```
-
 ### Test Modes
 
-#### 1. Single Image Testing
+| Mode      | Command                                               | Description            |
+| --------- | ----------------------------------------------------- | ---------------------- |
+| single    | `--mode single --image ./photo.jpg`                   | Test one image         |
+| cifake    | `--mode cifake --test_dir ./data_splits/test`         | Test on CIFAKE 15%     |
+| cross     | `--mode cross --cross_data_dir ./cross_test_data`     | Cross-dataset test     |
+| threshold | `--mode threshold --cross_data_dir ./cross_test_data` | Find optimal threshold |
+
+### Examples
 
 ```bash
+# Test single image
 python test.py --mode single --image ./photo.jpg
-```
 
-#### 2. CIFAKE Test Set Evaluation
-
-```bash
+# Test on CIFAKE test set
 python test.py --mode cifake --test_dir ./data_splits/test
-```
 
-#### 3. Cross-Dataset Testing
-
-```bash
-python test.py --mode cross --cross_data_dir ./cross_test_data
-```
-
-#### 4. Threshold Optimization (Recommended for Cross-Dataset)
-
-```bash
+# Cross-dataset with full metrics
 python test.py --mode threshold --cross_data_dir ./cross_test_data
-```
 
-This mode provides comprehensive metrics including PR-AUC, recall at fixed precision, and calibration error.
+# Quick cross-dataset test
+python test.py --mode cross --cross_data_dir ./cross_test_data --limit_samples 500
+```
 
 ---
 
 ## Cross-Dataset Evaluation
 
-### The Domain Shift Challenge
+### The Challenge
 
-Models trained on CIFAKE learn features specific to Stable Diffusion v1.4 at 32x32 resolution. Testing on Midjourney images presents a domain shift challenge due to:
+Models trained on CIFAKE (32x32, Stable Diffusion) face domain shift when tested on Midjourney images (1024x1024+, different generator).
 
-1. Different AI generator (Midjourney vs Stable Diffusion)
-2. Different resolution (high-res vs 32x32)
-3. Different artifact patterns
-
-### Resolution-Matching Preprocessing
-
-To bridge the domain gap, high-resolution test images undergo CIFAKE-style preprocessing:
+### Solution: CIFAKE-Style Preprocessing
 
 ```
 High-res image (1024x1024)
-    -> Downscale to 32x32 (match CIFAKE original)
+    -> Downscale to 32x32 (match CIFAKE)
     -> Upscale to 128x128 (match model input)
 ```
 
-This preserves the low-frequency characteristics that the model learned to detect.
-
 ### Cross-Dataset Results (Midjourney)
-
-Testing on Midjourney dataset with threshold optimization:
 
 | Metric            | Value  |
 | ----------------- | ------ |
@@ -280,41 +366,76 @@ Testing on Midjourney dataset with threshold optimization:
 | F1-Score          | 0.7156 |
 | Optimal Threshold | 0.35   |
 
-#### Advanced Metrics
+### Advanced Metrics
 
-| Metric                     | Value  | Description                           |
-| -------------------------- | ------ | ------------------------------------- |
-| PR-AUC                     | 0.7845 | Precision-Recall Area Under Curve     |
-| ROC-AUC                    | 0.7623 | Receiver Operating Characteristic AUC |
-| Recall at 80% Precision    | 0.60   | Recall when precision is fixed at 80% |
-| Expected Calibration Error | 0.0842 | Model confidence calibration          |
-| Brier Score                | 0.1923 | Probabilistic prediction accuracy     |
-
-#### Impact Analysis
-
-At 80% precision, recall improves from 0.45 to 0.60 with threshold optimization. This means that for applications requiring high precision (few false positives), the model can still detect 60% of AI-generated images. In a content moderation scenario processing 1000 images daily, this translates to catching approximately 150 additional AI-generated images that would have been missed with default settings.
+| Metric                     | Value  | Description                    |
+| -------------------------- | ------ | ------------------------------ |
+| PR-AUC                     | 0.7845 | Precision-Recall AUC           |
+| ROC-AUC                    | 0.7623 | ROC AUC                        |
+| Recall at 80% Precision    | 0.60   | High-confidence detection rate |
+| Expected Calibration Error | 0.0842 | Probability calibration        |
+| Brier Score                | 0.1923 | Probabilistic accuracy         |
 
 ---
 
 ## Results Summary
 
-### Performance Comparison
-
-| Phase   | Dataset    | Accuracy | F1-Score | Notes                                     |
-| ------- | ---------- | -------- | -------- | ----------------------------------------- |
-| Phase 1 | CIFAKE     | 68.50%   | 0.6841   | Logistic Regression baseline              |
-| Phase 2 | CIFAKE     | 96.18%   | 0.9618   | Custom CNN                                |
-| Phase 2 | Midjourney | 71.90%   | 0.7156   | Cross-dataset with threshold optimization |
+| Phase   | Dataset    | Accuracy | F1-Score | Notes               |
+| ------- | ---------- | -------- | -------- | ------------------- |
+| Phase 1 | CIFAKE     | 68.50%   | 0.6841   | Logistic Regression |
+| Phase 2 | CIFAKE     | 96.18%   | 0.9618   | Custom CNN          |
+| Phase 2 | Midjourney | 71.90%   | 0.7156   | Cross-dataset       |
 
 ### Key Findings
 
-1. Deep learning significantly outperforms hand-crafted features for in-domain detection, with a 27.68 percentage point improvement.
+1. Deep learning improves accuracy by 27.68 percentage points over classical ML
+2. Cross-dataset generalization drops 24.28 points due to domain shift
+3. Threshold optimization recovers ~12 percentage points on cross-dataset
+4. 60% recall achievable at 80% precision for high-confidence applications
 
-2. Cross-dataset generalization remains challenging, with a 24.28 percentage point drop when testing on Midjourney images.
+---
 
-3. Threshold optimization recovers approximately 12 percentage points of accuracy on cross-dataset evaluation compared to default threshold.
+## Troubleshooting
 
-4. The model achieves reasonable recall (60%) at high precision (80%) on cross-dataset, making it viable for applications where false positives are costly.
+### CUDA Out of Memory
+
+```bash
+# Reduce batch size
+python train.py --batch_size 32
+
+# Or limit samples
+python train.py --limit_samples 50000
+```
+
+### Model Not Found
+
+```
+Error: Model not found at ./models_phase2/best_custom_cnn_fast.pth
+```
+
+Solution: Train the model first with `python train.py`
+
+### Wrong Predictions (All Same Class)
+
+Check class folder names are exactly `ai_generated` and `real` (lowercase). Classes are loaded alphabetically.
+
+### Slow Training on CPU
+
+```bash
+# Verify GPU is detected
+python -c "import torch; print(torch.cuda.is_available())"
+
+# If False, reinstall PyTorch with CUDA
+pip uninstall torch torchvision
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+```
+
+### Import Errors
+
+```bash
+# Reinstall all dependencies
+pip install --upgrade torch torchvision numpy scikit-learn pillow tqdm
+```
 
 ---
 
@@ -322,44 +443,61 @@ At 80% precision, recall improves from 0.45 to 0.60 with threshold optimization.
 
 ### Current Limitations
 
-1. Resolution Dependency: The model was trained on low-resolution images and requires preprocessing for high-resolution inputs.
-
-2. Generator Specificity: Performance varies across different AI generators, with best results on Stable Diffusion-derived content.
-
-3. Evolving Generators: AI image generators improve rapidly; models may need retraining as new generators emerge.
-
-4. Post-Processing Sensitivity: The model has not been extensively tested against compressed or filtered images.
+1. Resolution Dependency: Requires preprocessing for high-res images
+2. Generator Specificity: Best on Stable Diffusion content
+3. Evolving Generators: May need retraining for new generators
+4. Post-Processing: Not tested against compression/filtering
 
 ### Future Directions
 
-1. Multi-generator training with diverse AI-generated image sources
-2. Resolution-agnostic architectures that operate on multiple scales
-3. Adversarial robustness testing and hardening
-4. Explainability analysis to understand learned detection features
-5. Real-time deployment optimization for production systems
+1. Multi-generator training
+2. Resolution-agnostic architectures
+3. Adversarial robustness
+4. Explainability analysis
+5. Real-time deployment
 
 ---
 
-## Quick Reference
+## Command Reference
 
 ```bash
-# Split data
+# Setup
+python -m venv venv
+source venv/bin/activate
+pip install torch torchvision numpy scikit-learn pillow tqdm
+
+# Data preparation
 python split_data.py --input ./data --output ./data_splits
 
-# Train model
-python train.py --epochs 40 --batch_size 64
+# Phase 1
+python phase_1/train.py --feature_method combined
+python phase_1/test.py --mode cifake --test_dir ./data_splits/test
 
-# Test on CIFAKE
+# Phase 2
+python train.py --epochs 40 --batch_size 64
 python test.py --mode cifake --test_dir ./data_splits/test
 
-# Test single image
-python test.py --mode single --image ./image.jpg
-
-# Cross-dataset with threshold optimization
+# Cross-dataset
 python test.py --mode threshold --cross_data_dir ./cross_test_data
 
-# Quick cross-dataset test
-python test.py --mode cross --cross_data_dir ./cross_test_data --limit_samples 500
+# Single image
+python test.py --mode single --image ./image.jpg
 ```
+
+---
+
+## Files Reference
+
+| File                       | Description                                 |
+| -------------------------- | ------------------------------------------- |
+| train.py                   | Phase 2 CNN training                        |
+| test.py                    | Phase 2 CNN testing (all modes)             |
+| phase_1/train.py           | Phase 1 logistic regression training        |
+| phase_1/test.py            | Phase 1 testing (all modes)                 |
+| phase_1/split_data.py      | Data splitting utility                      |
+| phase_1/check_data.py      | Check if dataset is proper                  |
+| phase_1/reorganize_data.py | Reorganize into two subfolders(ai and real) |
+| REPRODUCIBILITY.md         | Detailed reproduction instructions          |
+| PRESENTATION_SCRIPT.md     | 4-minute code walkthrough script            |
 
 ---
