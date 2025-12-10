@@ -422,14 +422,6 @@ def test_cross_dataset(model, cross_data_dir, device, batch_size=32, limit_sampl
 
 
 def find_optimal_threshold(model, cross_data_dir, device, limit_samples=None):
-    """
-    Find optimal decision threshold with comprehensive metrics:
-    - PR-AUC (Precision-Recall Area Under Curve)
-    - Recall at fixed precision (80%)
-    - Calibration error (Expected Calibration Error)
-    - Per-threshold accuracy breakdown
-    """
-    
     print("="*70)
     print("THRESHOLD OPTIMIZATION WITH COMPREHENSIVE METRICS")
     print("="*70 + "\n")

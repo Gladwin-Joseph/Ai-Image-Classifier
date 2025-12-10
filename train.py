@@ -88,8 +88,6 @@ class FastCNN(nn.Module):
 #DATASET
 
 class ImageDataset(Dataset):
-    """Fast dataset loader with caching"""
-    
     def __init__(self, root_dir, transform=None, limit_samples=None):
         self.root_dir = Path(root_dir)
         self.transform = transform
